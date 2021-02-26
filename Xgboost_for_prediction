@@ -1,0 +1,100 @@
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LogisticRegression
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.svm import SVC
+from sklearn.metrics import f1_score,precision_score,recall_score,roc_auc_score,accuracy_score,roc_curve,auc
+import matplotlib.pyplot as plt
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.ensemble import GradientBoostingClassifier
+from xgboost.sklearn import XGBClassifier
+import numpy as np
+import xgboost as xgb
+from sklearn.model_selection import GridSearchCV
+import lightgbm as lgb
+from sklearn import metrics
+from xgboost import plot_importance
+
+train_x, test_x, train_y, test_y = train_test_split(data, label,test_size=0.3, random_state=0)
+
+#Tuning Model Parameters
+parameters = {
+   'n_estimators': [300, 400, 500,600,700,800],
+   'min_child_weight': [1, 2, 3, 4, 5, 6],
+   'max_depth': [3,4,5,6,7,8,9,10],
+   'subsample': [0.6, 0.7, 0.8, 0.85, 0.95],
+   'colsample_bytree': [0.5, 0.6, 0.7, 0.8, 0.9],
+   'learning_rate': [0.01, 0.02, 0.05, 0.1, 0.15]
+}
+
+xlf = xgb.XGBClassifier(max_depth=10,
+                        learning_rate=0.01,
+                        n_estimators=2000,
+                        silent=True,
+                        objective='binary:logistic',
+                        nthread=-1,
+                        gamma=0,
+                        min_child_weight=1,
+                        max_delta_step=0,
+                        subsample=0.85,
+                        colsample_bytree=0.7,
+                        colsample_bylevel=1,
+                        reg_alpha=0,
+                        reg_lambda=1,
+                        scale_pos_weight=1,
+                        seed=1440,
+                        missing=None)
+
+gsearch = GridSearchCV(xlf, param_grid=parameters, scoring='accuracy', cv=3)
+gsearch.fit(train_x, train_y)
+
+print("Best score: %0.3f" % gsearch.best_score_)
+print("Best parameters set:")
+best_parameters = gsearch.best_estimator_.get_params()
+for param_name in sorted(parameters.keys()):
+    print("\t%s: %r" % (param_name, best_parameters[param_name]))
+    
+#classifier model building
+dtrain=xgb.DMatrix(train_x,label=train_y)
+dtest=xgb.DMatrix(test_x,label=test_y)
+params={'booster':'gbtree',
+    'objective': 'binary:logistic',
+        'min_child_weight': 1,
+    'eval_metric': 'logloss',
+    'n_estimators': 500,
+    'max_depth':6,
+    'reg_lambda':0.05,
+        'gamma': 0,
+    'subsample':0.85,
+    'colsample_bytree':0.7,
+          'colsample_bylevel':1,
+    'min_child_weight':0,
+        'max_delta_step':1,
+        'reg_alpha':0,
+    'eta': 0.01,
+    'seed':0,
+    'nthread':8,
+        'scale_pos_weight':0.4,
+     'silent':1}
+     
+res = xgb.cv(params,dtrain,num_boost_round=2000,metrics='logloss',early_stopping_rounds=25)
+best_nround = res.shape[0] - 1
+
+watchlist = [(dtrain,'train'),(dtest,'test')]
+bst=xgb.train(params,dtrain,num_boost_round=2000,evals=watchlist)
+ypred=bst.predict(dtest)
+
+y_pred = (ypred >= 0.5)*1
+
+from sklearn import metrics
+print('best_nround:',best_nround)
+print ('AUC: %.4f' % metrics.roc_auc_score(test_y,ypred))
+print ('ACC: %.4f' % metrics.accuracy_score(test_y,y_pred))
+print ('Recall: %.4f' % metrics.recall_score(test_y,y_pred))
+print ('F1-score: %.4f' %metrics.f1_score(test_y,y_pred))
+print ('Precesion: %.4f' %metrics.precision_score(test_y,y_pred))
+print(metrics.confusion_matrix(test_y,y_pred))
+
+plt.figure(figsize=(12, 10))
+plot_importance(bst,max_num_features=10)
+plt.show()
