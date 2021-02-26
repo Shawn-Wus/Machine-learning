@@ -81,7 +81,7 @@ res = xgb.cv(params,dtrain,num_boost_round=2000,metrics='logloss',early_stopping
 best_nround = res.shape[0] - 1
 
 watchlist = [(dtrain,'train'),(dtest,'test')]
-bst=xgb.train(params,dtrain,num_boost_round=2000,evals=watchlist)
+bst=xgb.train(params,dtrain,num_boost_round=best_nround,evals=watchlist)
 ypred=bst.predict(dtest)
 
 y_pred = (ypred >= 0.5)*1
