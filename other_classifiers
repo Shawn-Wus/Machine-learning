@@ -1,0 +1,51 @@
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import f1_score,precision_score,recall_score,roc_auc_score,accuracy_score,roc_curve
+import matplotlib.pyplot as plt
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.ensemble import GradientBoostingClassifier
+import lightgbm as lgb
+
+X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.3, random_state=1)
+
+forest=RandomForestClassifier(n_estimators=100,random_state=2018)
+forest.fit(X_train,y_train)
+forest_y_pre=forest.predict(X_test)
+forest_y_proba=forest.predict_proba(X_test)
+
+Gbdt=GradientBoostingClassifier(random_state=2018)
+Gbdt.fit(X_train,y_train)
+Gbdt_y_pre=Gbdt.predict(X_test)
+Gbdt_y_proba=Gbdt.predict_proba(X_test)
+
+gbm=lgb.LGBMClassifier(random_state=2018)
+gbm.fit(X_train,y_train)
+gbm_y_pre=gbm.predict(X_test)
+gbm_y_proba=gbm.predict_proba(X_test)
+
+forest_accuracy_score=accuracy_score(y_test,forest_y_pre)
+forest_preci_score=precision_score(y_test,forest_y_pre)
+forest_recall_score=recall_score(y_test,forest_y_pre)
+forest_f1_score=f1_score(y_test,forest_y_pre)
+forest_auc=roc_auc_score(y_test,forest_y_proba[:,1])
+print('forest_accuracy_score: %f,forest_preci_score: %f,forest_recall_score: %f,forest_f1_score: %f,forest_auc: %f'
+      %(forest_accuracy_score,forest_preci_score,forest_recall_score,forest_f1_score,forest_auc))
+
+
+
+Gbdt_accuracy_score=accuracy_score(y_test,Gbdt_y_pre)
+Gbdt_preci_score=precision_score(y_test,Gbdt_y_pre)
+Gbdt_recall_score=recall_score(y_test,Gbdt_y_pre)
+Gbdt_f1_score=f1_score(y_test,Gbdt_y_pre)
+Gbdt_auc=roc_auc_score(y_test,Gbdt_y_proba[:,1])
+print('Gbdt_accuracy_score: %f,Gbdt_preci_score: %f,Gbdt_recall_score: %f,Gbdt_f1_score: %f,Gbdt_auc: %f'
+      %(Gbdt_accuracy_score,Gbdt_preci_score,Gbdt_recall_score,Gbdt_f1_score,Gbdt_auc))
+
+
+gbm_accuracy_score=accuracy_score(y_test,gbm_y_pre)
+gbm_preci_score=precision_score(y_test,gbm_y_pre)
+gbm_recall_score=recall_score(y_test,gbm_y_pre)
+gbm_f1_score=f1_score(y_test,gbm_y_pre)
+gbm_auc=roc_auc_score(y_test,gbm_y_proba[:,1])
+print('gbm_accuracy_score: %f,gbm_preci_score: %f,gbm_recall_score: %f,gbm_f1_score: %f,gbm_auc: %f'
+          %(gbm_accuracy_score,gbm_preci_score,gbm_recall_score,gbm_f1_score,gbm_auc))
